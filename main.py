@@ -4,6 +4,10 @@ import json
 import os
 from datetime import datetime
 
+# Load environment variables from .env file
+import dotenv
+dotenv.load_dotenv()
+
 st.set_page_config(page_title="AI Research Assistant", layout="centered")
 
 st.title("🤖 Dwayne AI Research Assistant")
@@ -59,11 +63,13 @@ if prompt := st.chat_input("Type your research question..."):
 
     with st.spinner("Thinking..."):
         try:
-            url = os.getenv("GENAI_API_URL")
+            base_url = os.getenv("GENAI_API_URL")
             access_key = os.getenv("AGENT_ACCESS_KEY")
-            if not url or not access_key:
+            if not base_url or not access_key:
                 st.error("❌ Missing GENAI_API_URL or AGENT_ACCESS_KEY in environment.")
             else:
+                # Append the correct path for chat completions
+                url = base_url.rstrip("/") + "/api/v1/chat/completions"
                 headers = {
                     "Authorization": f"Bearer {access_key}",
                     "Content-Type": "application/json"
@@ -71,7 +77,10 @@ if prompt := st.chat_input("Type your research question..."):
 
                 payload = {
                     "messages": st.session_state.messages,
-                    "stream": False
+                    "stream": False,
+                    "include_functions_info": False,
+                    "include_retrieval_info": False,
+                    "include_guardrails_info": False
                 }
 
                 res = requests.post(url, json=payload, headers=headers)
